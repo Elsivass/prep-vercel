@@ -504,7 +504,7 @@ export default function App() {
       </header>
 
       {/* Main content */}
-      <main className="container mx-auto px-4 py-8">
+      <main className="main-container">
         {renderContent()}
       </main>
 
