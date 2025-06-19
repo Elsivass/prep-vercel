@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function App() {
   // Datos iniciales simulados
@@ -41,13 +41,30 @@ export default function App() {
     }
   ];
 
+  // Cargar desde localStorage si existe
+  const loadFromLocalStorage = (key, defaultValue) => {
+    try {
+      const saved = localStorage.getItem(key);
+      return saved ? JSON.parse(saved) : defaultValue;
+    } catch (e) {
+      console.error("Error loading from localStorage", e);
+      return defaultValue;
+    }
+  };
+
   // Estados principales
   const [isAdmin, setIsAdmin] = useState(false);
   const [password, setPassword] = useState('');
   const [activeTab, setActiveTab] = useState('general');
-  const [candidates, setCandidates] = useState(initialCandidates);
-  const [districts, setDistricts] = useState(initialDistricts);
+  const [candidates, setCandidates] = useState(loadFromLocalStorage('candidates', initialCandidates));
+  const [districts, setDistricts] = useState(loadFromLocalStorage('districts', initialDistricts));
   const [selectedDistrict, setSelectedDistrict] = useState(null);
+
+  // Guardar en localStorage
+  useEffect(() => {
+    localStorage.setItem('candidates', JSON.stringify(candidates));
+    localStorage.setItem('districts', JSON.stringify(districts));
+  }, [candidates, districts]);
 
   // Calcular votos totales por candidato desde todos los distritos
   const getCandidateVotes = (candidateId) => {
@@ -191,16 +208,23 @@ export default function App() {
     );
   };
 
+  // Guardar cambios (simula una acción de guardado)
+  const handleSave = () => {
+    localStorage.setItem('candidates', JSON.stringify(candidates));
+    localStorage.setItem('districts', JSON.stringify(districts));
+    alert('Cambios guardados correctamente.');
+  };
+
   // Renderizado condicional según pestaña activa
   const renderContent = () => {
     switch (activeTab) {
       case 'general':
         return (
-          <div className="space-y-6">
+          <div className="space-y-6 text-center">
             <h2 className="text-2xl font-bold text-gray-800">Resultados Generales</h2>
 
             {/* Tarjetas de participación */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
               <div className="bg-white p-6 rounded-lg shadow-md">
                 <h3 className="text-lg font-semibold mb-2">Participación Ciudadana</h3>
                 <div className="w-full bg-gray-200 rounded-full h-4 mb-2">
@@ -225,7 +249,7 @@ export default function App() {
             </div>
 
             {/* Candidatos destacados */}
-            <div className="bg-white p-6 rounded-lg shadow-md">
+            <div className="bg-white p-6 rounded-lg shadow-md max-w-5xl mx-auto">
               <h3 className="text-lg font-semibold mb-4">Candidatos</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {sortedCandidates.map(candidate => (
@@ -241,8 +265,8 @@ export default function App() {
                       </span>
                     )}
                     <img src={candidate.image} alt={candidate.name} className="w-16 h-16 rounded-full mx-auto mb-3" />
-                    <h4 className="font-bold text-center">{candidate.name}</h4>
-                    <p className="text-sm text-center text-gray-600">{candidate.party}</p>
+                    <h4 className="font-bold">{candidate.name}</h4>
+                    <p className="text-sm text-gray-600">{candidate.party}</p>
                     <div className="mt-2">
                       <div className="flex justify-between text-sm">
                         <span>{getCandidateVotes(candidate.id).toLocaleString()} votos</span>
@@ -261,13 +285,13 @@ export default function App() {
             </div>
 
             {/* Gráfico de torta */}
-            <div className="bg-white p-6 rounded-lg shadow-md flex flex-col items-center">
+            <div className="bg-white p-6 rounded-lg shadow-md flex flex-col items-center max-w-xl mx-auto">
               <h3 className="text-lg font-semibold mb-4">Distribución de Votos</h3>
               {renderPieChart()}
             </div>
 
             {/* Listado ordenado */}
-            <div className="bg-white p-6 rounded-lg shadow-md">
+            <div className="bg-white p-6 rounded-lg shadow-md max-w-4xl mx-auto">
               <h3 className="text-lg font-semibold mb-4">Ranking por Votos</h3>
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
@@ -298,10 +322,10 @@ export default function App() {
       case 'districts':
         return (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-800">Resultados por Distrito</h2>
+            <h2 className="text-2xl font-bold text-gray-800 text-center">Resultados por Distrito</h2>
 
             {/* Lista de distritos */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto">
               {districts.map(district => {
                 const totalVotesInDistrict = Object.values(district.results).reduce((sum, v) => sum + v, 0);
                 const totalPossible = totalVotesInDistrict + district.abstention;
@@ -376,7 +400,7 @@ export default function App() {
       case 'admin-login':
         return (
           <div className="max-w-md mx-auto mt-10">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">Acceso al Modo Administrador</h2>
+            <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Acceso al Modo Administrador</h2>
             <div className="bg-white p-6 rounded-lg shadow-md">
               <input
                 type="password"
@@ -397,8 +421,8 @@ export default function App() {
 
       case 'admin-panel':
         return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-800">Panel de Administración</h2>
+          <div className="space-y-6 max-w-5xl mx-auto">
+            <h2 className="text-2xl font-bold text-gray-800 text-center">Panel de Administración</h2>
 
             {/* Agregar nuevo candidato */}
             <div className="bg-white p-6 rounded-lg shadow-md">
@@ -456,6 +480,16 @@ export default function App() {
                   </div>
                 ))}
               </div>
+
+              {/* Botón de guardar */}
+              <div className="mt-6 text-center">
+                <button
+                  onClick={handleSave}
+                  className="bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Guardar Cambios
+                </button>
+              </div>
             </div>
           </div>
         );
@@ -504,7 +538,7 @@ export default function App() {
       </header>
 
       {/* Main content */}
-      <main className="main-container">
+      <main className="container mx-auto px-4 py-8">
         {renderContent()}
       </main>
 
